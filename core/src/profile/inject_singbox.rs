@@ -102,7 +102,8 @@ pub fn patch_singbox(
     outbounds.push(json!({ "type": "block", "tag": "block" }));
 
     let mut selector_targets: Vec<String> = Vec::new();
-    if let Some(YamlValue::Sequence(groups)) = yaml_doc.get(YamlValue::String("proxy-groups".into()))
+    if let Some(YamlValue::Sequence(groups)) =
+        yaml_doc.get(YamlValue::String("proxy-groups".into()))
     {
         for g in groups {
             if let Some((tag, value)) = translate_group(g, &accepted) {
@@ -239,7 +240,10 @@ fn translate_proxy(proxy: &YamlValue) -> Option<Value> {
             if let Some(uuid) = ystr(map, "uuid") {
                 o.insert("uuid".into(), json!(uuid));
             }
-            o.insert("security".into(), json!(ystr(map, "cipher").unwrap_or("auto")));
+            o.insert(
+                "security".into(),
+                json!(ystr(map, "cipher").unwrap_or("auto")),
+            );
             if let Some(aid) = yu16(map, "alterId") {
                 o.insert("alter_id".into(), json!(aid));
             }
@@ -352,7 +356,9 @@ fn translate_transport(map: &serde_yaml::Mapping) -> Option<Value> {
     let network = ystr(map, "network").unwrap_or("");
     match network {
         "ws" => {
-            let opts = map.get(YamlValue::String("ws-opts".into())).and_then(YamlValue::as_mapping);
+            let opts = map
+                .get(YamlValue::String("ws-opts".into()))
+                .and_then(YamlValue::as_mapping);
             let mut t = Map::new();
             t.insert("type".into(), json!("ws"));
             if let Some(o) = opts {
@@ -398,7 +404,8 @@ fn translate_tls(map: &serde_yaml::Mapping) -> Option<Value> {
         .get(YamlValue::String("tls".into()))
         .and_then(YamlValue::as_bool)
         .unwrap_or(false)
-        || ystr(map, "type").map(|s| s == "trojan" || s == "hysteria2" || s == "tuic")
+        || ystr(map, "type")
+            .map(|s| s == "trojan" || s == "hysteria2" || s == "tuic")
             .unwrap_or(false);
     if !want {
         return None;
@@ -424,9 +431,7 @@ fn translate_tls(map: &serde_yaml::Mapping) -> Option<Value> {
         }
     }
     // Reality (vless flow=xtls-rprx-vision)
-    if let Some(YamlValue::Mapping(reality)) =
-        map.get(YamlValue::String("reality-opts".into()))
-    {
+    if let Some(YamlValue::Mapping(reality)) = map.get(YamlValue::String("reality-opts".into())) {
         let mut r = Map::new();
         r.insert("enabled".into(), json!(true));
         if let Some(pk) = ystr(reality, "public-key") {
@@ -436,20 +441,16 @@ fn translate_tls(map: &serde_yaml::Mapping) -> Option<Value> {
             r.insert("short_id".into(), json!(sid));
         }
         t.insert("reality".into(), Value::Object(r));
-        if let Some(YamlValue::Mapping(client)) = map.get(YamlValue::String("client-fingerprint".into())) {
+        if let Some(YamlValue::Mapping(client)) =
+            map.get(YamlValue::String("client-fingerprint".into()))
+        {
             // mihomo's "client-fingerprint" is a flat string in modern releases;
             // earlier dialects nested it. Handle both shapes.
             if let Some(fp) = ystr(client, "value") {
-                t.insert(
-                    "utls".into(),
-                    json!({ "enabled": true, "fingerprint": fp }),
-                );
+                t.insert("utls".into(), json!({ "enabled": true, "fingerprint": fp }));
             }
         } else if let Some(fp) = ystr(map, "client-fingerprint") {
-            t.insert(
-                "utls".into(),
-                json!({ "enabled": true, "fingerprint": fp }),
-            );
+            t.insert("utls".into(), json!({ "enabled": true, "fingerprint": fp }));
         }
     }
     Some(Value::Object(t))
@@ -549,11 +550,7 @@ fn translate_rules(
                 if parts.len() < 3 {
                     continue;
                 }
-                (
-                    sb_rule_key(&head).unwrap_or(""),
-                    parts[1],
-                    parts[2],
-                )
+                (sb_rule_key(&head).unwrap_or(""), parts[1], parts[2])
             }
         };
         if key.is_empty() && head != "MATCH" && head != "FINAL" {
@@ -581,7 +578,10 @@ fn translate_rules(
                 node.insert("geoip".into(), json!([value.to_ascii_lowercase()]));
             }
             ("GEOSITE", _) => {
-                node.insert("rule_set".into(), json!([format!("geosite-{}", value.to_ascii_lowercase())]));
+                node.insert(
+                    "rule_set".into(),
+                    json!([format!("geosite-{}", value.to_ascii_lowercase())]),
+                );
             }
             ("PROCESS-NAME", _) => {
                 node.insert("process_name".into(), json!([value]));
@@ -653,7 +653,8 @@ fn default_dns() -> Value {
 // ---------------------------------------------------------------------- //
 
 fn ystr<'a>(map: &'a serde_yaml::Mapping, key: &str) -> Option<&'a str> {
-    map.get(YamlValue::String(key.into())).and_then(YamlValue::as_str)
+    map.get(YamlValue::String(key.into()))
+        .and_then(YamlValue::as_str)
 }
 
 fn yu16(map: &serde_yaml::Mapping, key: &str) -> Option<u16> {
@@ -722,7 +723,10 @@ proxies:
         let out = patch_singbox(yaml, "127.0.0.1:9090", "x", 7890, TunnelMode::Tun).unwrap();
         let root = parse(&out);
         let outs = root["outbounds"].as_array().unwrap();
-        let ss = outs.iter().find(|v| v["tag"] == "SS-1").expect("ss outbound");
+        let ss = outs
+            .iter()
+            .find(|v| v["tag"] == "SS-1")
+            .expect("ss outbound");
         assert_eq!(ss["type"], "shadowsocks");
         assert_eq!(ss["server"], "example.com");
         assert_eq!(ss["server_port"], 443);
@@ -788,8 +792,12 @@ proxy-groups:
         let root = parse(&out);
         let outs = root["outbounds"].as_array().unwrap();
         let group = outs.iter().find(|v| v["tag"] == "PROXY").unwrap();
-        let members: Vec<&str> = group["outbounds"].as_array().unwrap().iter()
-            .filter_map(|x| x.as_str()).collect();
+        let members: Vec<&str> = group["outbounds"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|x| x.as_str())
+            .collect();
         assert_eq!(members, vec!["GoodSS"]);
         assert!(outs.iter().all(|v| v["tag"] != "BadSSR"));
     }
@@ -916,14 +924,8 @@ proxies:
 
     #[test]
     fn non_mapping_root_is_rejected() {
-        let err = patch_singbox(
-            "- 1\n- 2\n",
-            "127.0.0.1:9090",
-            "x",
-            7890,
-            TunnelMode::Tun,
-        )
-        .unwrap_err();
+        let err =
+            patch_singbox("- 1\n- 2\n", "127.0.0.1:9090", "x", 7890, TunnelMode::Tun).unwrap_err();
         assert!(matches!(err, XboardError::Config(_)));
     }
 }

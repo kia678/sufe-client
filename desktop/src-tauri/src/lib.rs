@@ -23,9 +23,9 @@ use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 use xboard_core::api::HttpClient;
-use xboard_core::storage::SecureStore;
 #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 use xboard_core::storage::KeyringStore;
+use xboard_core::storage::SecureStore;
 
 use crate::commands::session::SECURE_SERVICE;
 use crate::persistence::Persistence;
@@ -89,8 +89,7 @@ pub fn run() {
                 // Linux-no-dbus / Android backend slot in here.
                 #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
                 {
-                    let secure: Arc<dyn SecureStore> =
-                        Arc::new(KeyringStore::new(SECURE_SERVICE));
+                    let secure: Arc<dyn SecureStore> = Arc::new(KeyringStore::new(SECURE_SERVICE));
                     let _ = state.secure.set(secure);
                 }
             }
@@ -103,10 +102,8 @@ pub fn run() {
             // is the canonical exit path and also the way to reopen after
             // hiding. We deliberately keep the menu minimal — ad-hoc
             // mode/connect controls would duplicate the in-app surface.
-            let show_item =
-                MenuItem::with_id(app, "tray-show", "显示主窗口", true, None::<&str>)?;
-            let quit_item =
-                MenuItem::with_id(app, "tray-quit", "退出 Xboard", true, None::<&str>)?;
+            let show_item = MenuItem::with_id(app, "tray-show", "显示主窗口", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "tray-quit", "退出 Xboard", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
             let qr_for_menu = qr_for_setup.clone();
             let _tray = TrayIconBuilder::with_id("xboard-main")
@@ -166,7 +163,9 @@ pub fn run() {
                     Some(s) => s,
                     None => return,
                 };
-                let Some(km) = state.kernel.get().cloned() else { return };
+                let Some(km) = state.kernel.get().cloned() else {
+                    return;
+                };
                 tauri::async_runtime::block_on(async move {
                     let _ = km.disconnect().await;
                 });

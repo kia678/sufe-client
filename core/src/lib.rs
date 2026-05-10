@@ -78,6 +78,12 @@ pub fn render_singbox_config(
         ffi::TunnelMode::Tun => profile::TunnelMode::Tun,
         ffi::TunnelMode::SystemProxy => profile::TunnelMode::SystemProxy,
     };
-    profile::patch_singbox(&subscribe_yaml, &external_controller, &secret, mixed_port, internal)
-        .map_err(ffi::FfiError::from)
+    profile::patch_singbox(
+        &subscribe_yaml,
+        &external_controller,
+        &secret,
+        mixed_port,
+        internal,
+    )
+    .map_err(ffi::FfiError::from)
 }

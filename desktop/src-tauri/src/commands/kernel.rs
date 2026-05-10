@@ -82,10 +82,7 @@ pub async fn kernel_health(
         let present = tokio::task::spawn_blocking(crate::svc_install::is_registered)
             .await
             .unwrap_or(false);
-        (
-            Some(present),
-            Some(format!(r"\\.\pipe\xboard-client-svc")),
-        )
+        (Some(present), Some(format!(r"\\.\pipe\xboard-client-svc")))
     };
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     let (helper_present, helper_path) = (None::<bool>, None::<String>);
@@ -100,10 +97,7 @@ pub async fn kernel_health(
 }
 
 #[tauri::command]
-pub async fn tail_kernel_log(
-    app: AppHandle,
-    max_bytes: Option<u64>,
-) -> CommandResult<String> {
+pub async fn tail_kernel_log(app: AppHandle, max_bytes: Option<u64>) -> CommandResult<String> {
     let log_path = app
         .path()
         .app_data_dir()

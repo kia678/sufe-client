@@ -95,9 +95,8 @@ impl HttpClient {
                 .map_err(|e| XboardError::Other(anyhow::anyhow!("order list parse: {e}")));
         }
         if let Some(inner) = raw.get("data").cloned() {
-            return serde_json::from_value(inner).map_err(|e| {
-                XboardError::Other(anyhow::anyhow!("order paginate parse: {e}"))
-            });
+            return serde_json::from_value(inner)
+                .map_err(|e| XboardError::Other(anyhow::anyhow!("order paginate parse: {e}")));
         }
         Err(XboardError::Other(anyhow::anyhow!(
             "unrecognised /user/order/fetch payload shape"
@@ -105,9 +104,7 @@ impl HttpClient {
     }
 
     pub async fn fetch_payment_methods(&self) -> Result<Vec<PaymentMethod>> {
-        let raw: serde_json::Value = self
-            .get_json("/api/v1/user/order/getPaymentMethod")
-            .await?;
+        let raw: serde_json::Value = self.get_json("/api/v1/user/order/getPaymentMethod").await?;
         if raw.is_array() {
             return serde_json::from_value(raw).map_err(|e| {
                 XboardError::Other(anyhow::anyhow!("payment method list parse: {e}"))
@@ -162,11 +159,7 @@ impl HttpClient {
         )))
     }
 
-    pub async fn checkout_order(
-        &self,
-        trade_no: &str,
-        method: i64,
-    ) -> Result<CheckoutResponse> {
+    pub async fn checkout_order(&self, trade_no: &str, method: i64) -> Result<CheckoutResponse> {
         #[derive(Serialize)]
         struct Body<'a> {
             trade_no: &'a str,
@@ -176,10 +169,7 @@ impl HttpClient {
         // data}` envelope; `unwrap_envelope`'s no-status branch returns the
         // body verbatim, which already matches `CheckoutResponse`.
         let resp: CheckoutResponse = self
-            .post_json(
-                "/api/v1/user/order/checkout",
-                &Body { trade_no, method },
-            )
+            .post_json("/api/v1/user/order/checkout", &Body { trade_no, method })
             .await?;
         Ok(resp)
     }

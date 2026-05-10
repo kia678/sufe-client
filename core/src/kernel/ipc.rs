@@ -74,20 +74,11 @@ pub enum Request {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Response {
-    Pong {
-        helper_version: String,
-    },
-    Status {
-        running: bool,
-        pid: Option<u32>,
-    },
-    Started {
-        pid: u32,
-    },
+    Pong { helper_version: String },
+    Status { running: bool, pid: Option<u32> },
+    Started { pid: u32 },
     Stopped,
-    Error {
-        message: String,
-    },
+    Error { message: String },
 }
 
 impl Frame {

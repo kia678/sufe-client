@@ -68,10 +68,9 @@ pub async fn helper_status(_state: State<'_, AppState>) -> CommandResult<HelperS
     #[cfg(target_os = "windows")]
     {
         // SCM lookup is sync; spawn_blocking keeps it off the tauri thread.
-        let installed =
-            tokio::task::spawn_blocking(crate::svc_install::is_registered)
-                .await
-                .unwrap_or(false);
+        let installed = tokio::task::spawn_blocking(crate::svc_install::is_registered)
+            .await
+            .unwrap_or(false);
         let reachable = if installed {
             crate::svc_install::ping_svc().await
         } else {

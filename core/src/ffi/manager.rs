@@ -23,9 +23,7 @@ use tokio::task::JoinHandle;
 use super::client::Client;
 use super::errors::FfiError;
 use super::observer::{StateFanout, StateObserver, TunDelegate};
-use super::types::{
-    ConnectionState as FfiConnectionState, ProxyGroup, TrafficStats, TunnelMode,
-};
+use super::types::{ConnectionState as FfiConnectionState, ProxyGroup, TrafficStats, TunnelMode};
 use crate::kernel::launcher::DirectLauncher;
 use crate::kernel::KernelManager;
 use crate::kernel::MihomoDriver;
@@ -61,9 +59,7 @@ impl ConnectionManager {
         let cache_dir = PathBuf::from(cache_dir);
 
         let driver = Arc::new(MihomoDriver::new());
-        let launcher = Arc::new(
-            DirectLauncher::new().with_binary_hint(binary_path.clone()),
-        );
+        let launcher = Arc::new(DirectLauncher::new().with_binary_hint(binary_path.clone()));
         let fetcher = ProfileFetcher::new(client.http_client(), cache_dir);
 
         let inner = Arc::new(KernelManager::new(

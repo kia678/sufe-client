@@ -10,10 +10,7 @@ use crate::error::{CommandError, CommandResult};
 use crate::state::AppState;
 
 #[tauri::command]
-pub async fn connect(
-    state: State<'_, AppState>,
-    app: AppHandle,
-) -> CommandResult<ConnectionState> {
+pub async fn connect(state: State<'_, AppState>, app: AppHandle) -> CommandResult<ConnectionState> {
     let auth = state
         .snapshot_auth()
         .ok_or_else(|| CommandError::new("unauthorized", "未登录").with_status(401))?;

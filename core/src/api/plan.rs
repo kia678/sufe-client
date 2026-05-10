@@ -80,9 +80,8 @@ impl HttpClient {
                 .map_err(|e| XboardError::Other(anyhow::anyhow!("plan list parse: {e}")));
         }
         if let Some(inner) = raw.get("data").cloned() {
-            return serde_json::from_value(inner).map_err(|e| {
-                XboardError::Other(anyhow::anyhow!("plan paginate parse: {e}"))
-            });
+            return serde_json::from_value(inner)
+                .map_err(|e| XboardError::Other(anyhow::anyhow!("plan paginate parse: {e}")));
         }
         Err(XboardError::Other(anyhow::anyhow!(
             "unrecognised /user/plan/fetch payload shape"

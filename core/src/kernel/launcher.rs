@@ -124,10 +124,7 @@ pub enum LaunchHandle {
     /// Privileged spawn (Win svc / Mac helper). The kernel runs in a
     /// different process tree; the handle carries the IPC endpoint we
     /// use to send `StopKernel`.
-    Remote {
-        ipc_path: String,
-        pid: Option<u32>,
-    },
+    Remote { ipc_path: String, pid: Option<u32> },
 }
 
 #[async_trait]
@@ -317,12 +314,7 @@ async fn wait_for_controller(addr: &str, secret: &str) -> Result<(), LauncherErr
 
     for _ in 0..50 {
         tokio::time::sleep(Duration::from_millis(100)).await;
-        match client
-            .get(&url)
-            .header("Authorization", &auth)
-            .send()
-            .await
-        {
+        match client.get(&url).header("Authorization", &auth).send().await {
             Ok(r) if r.status().is_success() => return Ok(()),
             // Anything else (connection refused, 401, 500) → keep polling.
             _ => continue,
@@ -624,8 +616,9 @@ impl HelperSocketLauncher {
         use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
         use tokio::net::UnixStream;
 
-        let stream = UnixStream::connect(&self.socket_path).await.map_err(|e| {
-            match e.kind() {
+        let stream = UnixStream::connect(&self.socket_path)
+            .await
+            .map_err(|e| match e.kind() {
                 std::io::ErrorKind::NotFound | std::io::ErrorKind::ConnectionRefused => {
                     LauncherError::ServiceMissing(format!(
                         "helper socket {} not reachable: {}",
@@ -639,8 +632,7 @@ impl HelperSocketLauncher {
                     e
                 )),
                 _ => LauncherError::Io(e),
-            }
-        })?;
+            })?;
         let (read_half, mut write_half) = stream.into_split();
         let id = self.next_request_id();
         let frame = super::ipc::Frame::request(id, req);
@@ -728,9 +720,9 @@ impl KernelLauncher for HelperSocketLauncher {
                     pid: Some(pid),
                 })
             }
-            super::ipc::Response::Error { message } => {
-                Err(LauncherError::Other(format!("helper rejected start: {message}")))
-            }
+            super::ipc::Response::Error { message } => Err(LauncherError::Other(format!(
+                "helper rejected start: {message}"
+            ))),
             other => Err(LauncherError::Ipc(format!(
                 "unexpected start response: {other:?}"
             ))),
@@ -792,14 +784,7 @@ pub mod linux_caps {
         // with size 0 is the documented way to query whether the xattr
         // exists. Returns the size of the value (>=0) on success or -1 on
         // any error.
-        let rc = unsafe {
-            libc_getxattr(
-                cpath.as_ptr(),
-                attr.as_ptr(),
-                std::ptr::null_mut(),
-                0,
-            )
-        };
+        let rc = unsafe { libc_getxattr(cpath.as_ptr(), attr.as_ptr(), std::ptr::null_mut(), 0) };
         rc >= 0
     }
 

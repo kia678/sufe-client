@@ -11,6 +11,5 @@
 //! mod tree.
 
 fn main() {
-    uniffi::generate_scaffolding("src/ffi.udl")
-        .expect("uniffi scaffolding for src/ffi.udl");
+    uniffi::generate_scaffolding("src/ffi.udl").expect("uniffi scaffolding for src/ffi.udl");
 }

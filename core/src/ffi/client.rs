@@ -310,9 +310,8 @@ impl Client {
         };
         *self.session.write() = Some(snap.clone());
 
-        let snap_json = serde_json::to_string(&snap).map_err(|e| {
-            FfiError::Config(format!("serialize session snapshot: {e}"))
-        })?;
+        let snap_json = serde_json::to_string(&snap)
+            .map_err(|e| FfiError::Config(format!("serialize session snapshot: {e}")))?;
 
         let secure = self.secure.clone();
         if let Err(e) = blocking_put(&secure, BEARER_KEY, &auth.auth_data).await {
@@ -357,10 +356,7 @@ async fn blocking_put(
         .map_err(FfiError::from)
 }
 
-async fn blocking_delete(
-    store: &Arc<dyn CoreSecureStore>,
-    key: &str,
-) -> Result<(), FfiError> {
+async fn blocking_delete(store: &Arc<dyn CoreSecureStore>, key: &str) -> Result<(), FfiError> {
     let store = store.clone();
     let key = key.to_string();
     tokio::task::spawn_blocking(move || store.delete(&key))

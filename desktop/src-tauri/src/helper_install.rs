@@ -159,9 +159,7 @@ fn run_as_admin(script: &str) -> Result<(), LauncherError> {
         // osascript exits 1 when the user clicks Cancel on the auth dialog
         // and embeds "User canceled" / "(-128)" in stderr.
         if stderr.contains("-128") || stderr.to_lowercase().contains("user canceled") {
-            return Err(LauncherError::NeedsConsent(
-                "用户拒绝了管理员授权".into(),
-            ));
+            return Err(LauncherError::NeedsConsent("用户拒绝了管理员授权".into()));
         }
         return Err(LauncherError::Other(format!(
             "osascript exited {}: {}",

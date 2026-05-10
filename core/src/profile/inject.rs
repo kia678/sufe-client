@@ -72,10 +72,7 @@ pub fn patch_mihomo(
         Value::String("external-controller".into()),
         Value::String(external_controller.into()),
     );
-    doc.insert(
-        Value::String("secret".into()),
-        Value::String(secret.into()),
-    );
+    doc.insert(Value::String("secret".into()), Value::String(secret.into()));
     doc.insert(
         Value::String("mixed-port".into()),
         Value::Number(mixed_port.into()),
@@ -96,10 +93,7 @@ pub fn patch_mihomo(
             // `gvisor` is too slow for large file transfers; pure `system` is
             // the fastest but Windows Defender / macOS firewall sometimes
             // refuses to whitelist it.
-            tun.insert(
-                Value::String("stack".into()),
-                Value::String("mixed".into()),
-            );
+            tun.insert(Value::String("stack".into()), Value::String("mixed".into()));
             tun.insert(Value::String("auto-route".into()), Value::Bool(true));
             tun.insert(
                 Value::String("auto-detect-interface".into()),
@@ -130,10 +124,7 @@ pub fn patch_mihomo(
             {
                 // Auto-write nftables rules in `output` chain so processes
                 // bound to a non-default interface still get redirected.
-                tun.insert(
-                    Value::String("auto-redirect".into()),
-                    Value::Bool(true),
-                );
+                tun.insert(Value::String("auto-redirect".into()), Value::Bool(true));
                 // Kernel GSO offloading — material throughput improvement on
                 // Linux 5.10+, where TUN GSO checksumming is solid.
                 tun.insert(Value::String("gso".into()), Value::Bool(true));
@@ -195,18 +186,12 @@ pub fn patch_mihomo(
     // rules are left alone so users get exactly what their backend configured.
     if needs_default_rules(&doc) {
         let proxy_target = pick_default_proxy_target(&doc).unwrap_or_else(|| "GLOBAL".to_string());
-        doc.insert(
-            Value::String("mode".into()),
-            Value::String("rule".into()),
-        );
+        doc.insert(Value::String("mode".into()), Value::String("rule".into()));
         // Mihomo's built-in GEOSITE / GEOIP matchers read from `geosite.dat` +
         // `geoip.metadb`. If the kernel doesn't yet have them on disk, the
         // default `geo-auto-update: true` (set below) will pull them on first
         // start. No `rule-providers` block is needed.
-        doc.insert(
-            Value::String("geo-auto-update".into()),
-            Value::Bool(true),
-        );
+        doc.insert(Value::String("geo-auto-update".into()), Value::Bool(true));
         doc.insert(
             Value::String("geo-update-interval".into()),
             Value::Number(24.into()),
@@ -263,7 +248,9 @@ fn needs_default_rules(doc: &Mapping) -> bool {
 /// Falls back to `None` (caller uses `GLOBAL`) when no proxy-groups exist or
 /// none are of a switchable type.
 fn pick_default_proxy_target(doc: &Mapping) -> Option<String> {
-    let groups = doc.get(Value::String("proxy-groups".into()))?.as_sequence()?;
+    let groups = doc
+        .get(Value::String("proxy-groups".into()))?
+        .as_sequence()?;
     // Prefer the first Selector — that's the group the user actually clicks on.
     if let Some(name) = first_group_of_type(groups, "select") {
         return Some(name);
@@ -276,9 +263,12 @@ fn pick_default_proxy_target(doc: &Mapping) -> Option<String> {
         }
     }
     // Last resort: first group with any name we can read.
-    groups
-        .iter()
-        .find_map(|v| v.as_mapping()?.get(Value::String("name".into()))?.as_str().map(str::to_string))
+    groups.iter().find_map(|v| {
+        v.as_mapping()?
+            .get(Value::String("name".into()))?
+            .as_str()
+            .map(str::to_string)
+    })
 }
 
 fn first_group_of_type(groups: &[Value], wanted: &str) -> Option<String> {
@@ -465,8 +455,7 @@ mod tests {
     #[test]
     fn existing_tun_block_is_disabled_when_system_proxy_mode() {
         let yaml = "tun:\n  enable: true\n  stack: system\n";
-        let out =
-            patch_mihomo(yaml, "127.0.0.1:9090", "x", 7890, TunnelMode::SystemProxy).unwrap();
+        let out = patch_mihomo(yaml, "127.0.0.1:9090", "x", 7890, TunnelMode::SystemProxy).unwrap();
         let m = parse(&out);
         let tun = match m.get(Value::String("tun".into())).unwrap() {
             Value::Mapping(t) => t,
@@ -499,9 +488,14 @@ mod tests {
     #[test]
     fn upstream_secret_is_overwritten_with_ours() {
         let yaml = "secret: leaked-from-cache\n";
-        let out =
-            patch_mihomo(yaml, "127.0.0.1:9090", "fresh-32-byte-hex", 7890, TunnelMode::Tun)
-                .unwrap();
+        let out = patch_mihomo(
+            yaml,
+            "127.0.0.1:9090",
+            "fresh-32-byte-hex",
+            7890,
+            TunnelMode::Tun,
+        )
+        .unwrap();
         let m = parse(&out);
         assert_eq!(
             m.get(Value::String("secret".into()))
@@ -624,8 +618,8 @@ rules:
 
     #[test]
     fn non_mapping_root_is_rejected() {
-        let err = patch_mihomo("- 1\n- 2\n", "127.0.0.1:9090", "s", 7890, TunnelMode::Tun)
-            .unwrap_err();
+        let err =
+            patch_mihomo("- 1\n- 2\n", "127.0.0.1:9090", "s", 7890, TunnelMode::Tun).unwrap_err();
         match err {
             XboardError::Config(_) => {}
             other => panic!("expected Config error, got {:?}", other),

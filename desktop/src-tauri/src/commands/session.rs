@@ -36,9 +36,7 @@ pub fn account_key(host: &str, email: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn hydrate_session(
-    state: State<'_, AppState>,
-) -> CommandResult<Option<LoginSummary>> {
+pub async fn hydrate_session(state: State<'_, AppState>) -> CommandResult<Option<LoginSummary>> {
     let client = state
         .snapshot_client()
         .ok_or_else(|| CommandError::new("not_initialized", "后端尚未就绪"))?;
@@ -99,10 +97,7 @@ pub async fn hydrate_session(
 }
 
 #[tauri::command]
-pub async fn check_login(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> CommandResult<bool> {
+pub async fn check_login(app: AppHandle, state: State<'_, AppState>) -> CommandResult<bool> {
     let client = state
         .snapshot_client()
         .ok_or_else(|| CommandError::new("not_initialized", "后端尚未就绪"))?;
@@ -166,9 +161,7 @@ pub fn clear_session(app: &AppHandle, state: &State<'_, AppState>) {
         client.set_bearer(None);
     }
 
-    if let (Some((host, email)), Some(secure)) =
-        (host_email.as_ref(), state.snapshot_secure())
-    {
+    if let (Some((host, email)), Some(secure)) = (host_email.as_ref(), state.snapshot_secure()) {
         let _ = secure.delete(&account_key(host, email));
     }
 

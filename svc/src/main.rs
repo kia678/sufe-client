@@ -67,7 +67,7 @@ mod imp {
     use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
     use windows_sys::Win32::Foundation::{
-        CloseHandle, GetLastError, BOOL, FALSE, HANDLE, HLOCAL, LocalFree, TRUE,
+        CloseHandle, GetLastError, LocalFree, BOOL, FALSE, HANDLE, HLOCAL, TRUE,
     };
     use windows_sys::Win32::Security::Authorization::{
         ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW,
@@ -149,10 +149,7 @@ mod imp {
             start_type: ServiceStartType::AutoStart,
             error_control: ServiceErrorControl::Normal,
             executable_path: exe.clone(),
-            launch_arguments: vec![
-                OsString::from(ALLOWED_SID_ARG),
-                OsString::from(&user_sid),
-            ],
+            launch_arguments: vec![OsString::from(ALLOWED_SID_ARG), OsString::from(&user_sid)],
             dependencies: vec![],
             account_name: None, // None == LocalSystem
             account_password: None,
@@ -166,9 +163,7 @@ mod imp {
                 let _ = svc.set_description(SVC_DESCRIPTION);
                 tracing::info!("xboard-svc registered (sid={user_sid})");
             }
-            Err(windows_service::Error::Winapi(io_err))
-                if io_err.raw_os_error() == Some(1073) =>
-            {
+            Err(windows_service::Error::Winapi(io_err)) if io_err.raw_os_error() == Some(1073) => {
                 // ERROR_SERVICE_EXISTS — open and reconfigure in place.
                 let svc = manager
                     .open_service(SVC_NAME, ServiceAccess::CHANGE_CONFIG)
@@ -184,9 +179,8 @@ mod imp {
     }
 
     fn uninstall_self() -> anyhow::Result<()> {
-        let manager =
-            ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
-                .map_err(|e| anyhow::anyhow!("open SCM: {e}"))?;
+        let manager = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+            .map_err(|e| anyhow::anyhow!("open SCM: {e}"))?;
         let svc = manager
             .open_service(SVC_NAME, ServiceAccess::STOP | ServiceAccess::DELETE)
             .map_err(|e| anyhow::anyhow!("open service: {e}"))?;
@@ -605,10 +599,7 @@ mod imp {
     }
 
     fn is_allowed_basename(p: &Path) -> bool {
-        const ALLOWED: &[&str] = &[
-            "mihomo.exe",
-            "mihomo-x86_64-pc-windows-msvc.exe",
-        ];
+        const ALLOWED: &[&str] = &["mihomo.exe", "mihomo-x86_64-pc-windows-msvc.exe"];
         p.file_name()
             .and_then(|n| n.to_str())
             .map(|n| ALLOWED.iter().any(|a| a.eq_ignore_ascii_case(n)))

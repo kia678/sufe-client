@@ -85,9 +85,8 @@ impl HttpClient {
                 .map_err(|e| XboardError::Other(anyhow::anyhow!("ticket list parse: {e}")));
         }
         if let Some(inner) = raw.get("data").cloned() {
-            return serde_json::from_value(inner).map_err(|e| {
-                XboardError::Other(anyhow::anyhow!("ticket paginate parse: {e}"))
-            });
+            return serde_json::from_value(inner)
+                .map_err(|e| XboardError::Other(anyhow::anyhow!("ticket paginate parse: {e}")));
         }
         Err(XboardError::Other(anyhow::anyhow!(
             "unrecognised /user/ticket/fetch list shape"
@@ -152,7 +151,11 @@ impl HttpClient {
         let raw: serde_json::Value = self
             .post_json(
                 "/api/v1/user/ticket/save",
-                &Body { subject, level, message },
+                &Body {
+                    subject,
+                    level,
+                    message,
+                },
             )
             .await?;
         // Three shapes seen in the wild: scalar id, `{ id: N }`, or just `true`.

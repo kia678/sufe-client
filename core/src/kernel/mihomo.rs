@@ -236,9 +236,7 @@ impl KernelDriver for MihomoDriver {
             .and_then(|r| r.error_for_status());
         if let Err(e) = probe {
             *self.secret.write() = None;
-            return Err(XboardError::Kernel(format!(
-                "controller probe failed: {e}"
-            )));
+            return Err(XboardError::Kernel(format!("controller probe failed: {e}")));
         }
 
         *self.attached.write() = true;
@@ -384,8 +382,7 @@ impl KernelDriver for MihomoDriver {
                 }
                 let line = buf.trim();
                 if !line.is_empty() {
-                    return serde_json::from_str::<RawTrafficLine>(line)
-                        .map_err(XboardError::from);
+                    return serde_json::from_str::<RawTrafficLine>(line).map_err(XboardError::from);
                 }
             }
         };

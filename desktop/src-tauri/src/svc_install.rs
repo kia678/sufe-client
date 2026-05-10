@@ -22,13 +22,11 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::ShellExt;
-use windows_sys::Win32::Foundation::{GetLastError, ERROR_CANCELLED};
-use windows_sys::Win32::UI::Shell::{
-    ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW,
-};
-use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
-use windows_sys::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject, INFINITE};
 use windows_sys::Win32::Foundation::CloseHandle;
+use windows_sys::Win32::Foundation::{GetLastError, ERROR_CANCELLED};
+use windows_sys::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject, INFINITE};
+use windows_sys::Win32::UI::Shell::{ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW};
+use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
 
 use xboard_core::kernel::launcher::{LauncherError, SvcInstaller};
 
@@ -54,9 +52,7 @@ struct RunasInstaller {
 impl SvcInstaller for RunasInstaller {
     async fn install(&self) -> Result<(), LauncherError> {
         let exe = self.bundled_svc.clone().ok_or_else(|| {
-            LauncherError::ServiceMissing(
-                "bundled xboard-svc.exe missing from the app".into(),
-            )
+            LauncherError::ServiceMissing("bundled xboard-svc.exe missing from the app".into())
         })?;
         if !exe.exists() {
             return Err(LauncherError::ServiceMissing(format!(
@@ -78,9 +74,7 @@ impl SvcInstaller for RunasInstaller {
 
     async fn uninstall(&self) -> Result<(), LauncherError> {
         let exe = self.bundled_svc.clone().ok_or_else(|| {
-            LauncherError::ServiceMissing(
-                "bundled xboard-svc.exe missing from the app".into(),
-            )
+            LauncherError::ServiceMissing("bundled xboard-svc.exe missing from the app".into())
         })?;
         tokio::task::spawn_blocking(move || run_elevated(&exe, "uninstall"))
             .await
@@ -226,8 +220,7 @@ pub async fn ping_svc() -> bool {
     let (read, _write) = tokio::io::split(client);
     let mut reader = BufReader::new(read);
     let mut buf = String::new();
-    let read =
-        tokio::time::timeout(Duration::from_millis(500), reader.read_line(&mut buf)).await;
+    let read = tokio::time::timeout(Duration::from_millis(500), reader.read_line(&mut buf)).await;
     matches!(read, Ok(Ok(n)) if n > 0)
 }
 
@@ -236,8 +229,7 @@ pub async fn ping_svc() -> bool {
 pub fn is_registered() -> bool {
     use windows_service::service::ServiceAccess;
     use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
-    let Ok(manager) =
-        ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+    let Ok(manager) = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
     else {
         return false;
     };

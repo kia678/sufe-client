@@ -14,15 +14,13 @@
 //! Conversions are infallible — every wire type either drops cleanly into
 //! the FFI shape or carries enough fallback to avoid panicking.
 
+use crate::api::{AuthResult as ApiAuthResult, CheckoutResponse as ApiCheckoutResponse};
 use crate::api::{
     Notice as ApiNotice, Order as ApiOrder, PaymentMethod as ApiPaymentMethod, Plan as ApiPlan,
     SiteConfig as ApiSiteConfig, SubscribeInfo as ApiSubscribeInfo, Ticket as ApiTicket,
     TicketDetail as ApiTicketDetail, TicketMessage as ApiTicketMessage, UserInfo as ApiUserInfo,
 };
-use crate::api::{CheckoutResponse as ApiCheckoutResponse, AuthResult as ApiAuthResult};
-use crate::kernel::driver::{
-    ProxyGroup as KernelProxyGroup, TrafficStats as KernelTrafficStats,
-};
+use crate::kernel::driver::{ProxyGroup as KernelProxyGroup, TrafficStats as KernelTrafficStats};
 use crate::kernel::manager::{
     ConnectStage as KernelConnectStage, ConnectionState as KernelConnectionState,
     TunnelMode as KernelTunnelMode,
@@ -297,7 +295,10 @@ pub struct CheckoutResponse {
 impl From<ApiCheckoutResponse> for CheckoutResponse {
     fn from(c: ApiCheckoutResponse) -> Self {
         let data_json = serde_json::to_string(&c.data).unwrap_or_else(|_| "null".to_string());
-        Self { kind: c.kind, data_json }
+        Self {
+            kind: c.kind,
+            data_json,
+        }
     }
 }
 

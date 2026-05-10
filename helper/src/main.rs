@@ -281,9 +281,7 @@ fn require_root() -> anyhow::Result<()> {
     let uid = unsafe { libc_getuid() };
     let gid = unsafe { libc_getgid() };
     if uid != 0 {
-        anyhow::bail!(
-            "xboard-helper must run as root (uid=0); current uid={uid} gid={gid}"
-        );
+        anyhow::bail!("xboard-helper must run as root (uid=0); current uid={uid} gid={gid}");
     }
     Ok(())
 }
@@ -408,7 +406,9 @@ mod tests {
     fn root_allowlist_rejects_unrelated_paths() {
         assert!(!is_under_allowed_root(Path::new("/bin/sh")));
         assert!(!is_under_allowed_root(Path::new("/etc/passwd")));
-        assert!(!is_under_allowed_root(Path::new("/Users/alice/Downloads/mihomo")));
+        assert!(!is_under_allowed_root(Path::new(
+            "/Users/alice/Downloads/mihomo"
+        )));
         assert!(!is_under_allowed_root(Path::new("/tmp/mihomo")));
         // `/Applications/Other.app/...` must not match the Xboard.app prefix.
         assert!(!is_under_allowed_root(Path::new(

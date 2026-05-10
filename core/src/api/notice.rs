@@ -65,14 +65,12 @@ impl HttpClient {
         //   1. plain array          → `[ Notice, Notice, ... ]`
         //   2. Laravel paginate     → `{ data: [...], total, current_page, ... }`
         if raw.is_array() {
-            return serde_json::from_value(raw).map_err(|e| {
-                XboardError::Other(anyhow::anyhow!("notice list parse: {e}"))
-            });
+            return serde_json::from_value(raw)
+                .map_err(|e| XboardError::Other(anyhow::anyhow!("notice list parse: {e}")));
         }
         if let Some(inner) = raw.get("data").cloned() {
-            return serde_json::from_value(inner).map_err(|e| {
-                XboardError::Other(anyhow::anyhow!("notice paginate parse: {e}"))
-            });
+            return serde_json::from_value(inner)
+                .map_err(|e| XboardError::Other(anyhow::anyhow!("notice paginate parse: {e}")));
         }
         Err(XboardError::Other(anyhow::anyhow!(
             "unrecognised /user/notice/fetch payload shape"
