@@ -35,6 +35,7 @@ use futures::stream::{BoxStream, StreamExt};
 use parking_lot::RwLock;
 use ring::rand::{SecureRandom, SystemRandom};
 use serde::{Deserialize, Serialize};
+use serde_yaml::{Mapping, Value};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -123,6 +124,7 @@ pub struct KernelManager {
     state: RwLock<ConnectionState>,
     listeners: broadcast::Sender<ConnectionState>,
     requested_mode: RwLock<TunnelMode>,
+    primary_group: RwLock<Option<String>>,
     /// Live launch handle while connected. Taken on disconnect and handed
     /// back to `launcher.stop`.
     handle: RwLock<Option<LaunchHandle>>,
@@ -167,6 +169,7 @@ impl KernelManager {
             state: RwLock::new(ConnectionState::Disconnected),
             listeners,
             requested_mode: RwLock::new(TunnelMode::default()),
+            primary_group: RwLock::new(None),
             handle: RwLock::new(None),
             controller_addr: DEFAULT_CONTROLLER_ADDR.to_string(),
             mixed_port: DEFAULT_MIXED_PORT,
@@ -199,11 +202,22 @@ impl KernelManager {
     }
 
     pub async fn proxies(&self) -> Result<Vec<ProxyGroup>> {
-        self.driver.proxies().await
+        let mut groups = self.driver.proxies().await?;
+        let primary = self.primary_group.read().clone();
+        groups.sort_by(|a, b| {
+            let ar = group_rank(a, primary.as_deref());
+            let br = group_rank(b, primary.as_deref());
+            ar.cmp(&br).then_with(|| a.name.cmp(&b.name))
+        });
+        Ok(groups)
     }
 
     pub async fn select_proxy(&self, group: &str, name: &str) -> Result<()> {
         self.driver.select_proxy(group, name).await
+    }
+
+    pub fn mixed_port(&self) -> u16 {
+        self.mixed_port
     }
 
     pub async fn latency_test(&self, name: &str) -> Result<u32> {
@@ -246,6 +260,7 @@ impl KernelManager {
             Ok(t) => t,
             Err(e) => return self.fail(requested, format!("read subscribe cache: {e}")),
         };
+        *self.primary_group.write() = pick_primary_proxy_group(&yaml);
 
         // Phase B: probe privilege; choose final mode.
         self.publish(ConnectionState::Connecting {
@@ -464,6 +479,63 @@ fn generate_secret() -> std::result::Result<String, ring::error::Unspecified> {
     let mut bytes = [0u8; 32];
     rng.fill(&mut bytes)?;
     Ok(hex::encode(bytes))
+}
+
+fn group_rank(group: &ProxyGroup, primary: Option<&str>) -> u8 {
+    if primary.is_some_and(|name| name == group.name) {
+        return 0;
+    }
+    if matches!(
+        group.name.as_str(),
+        "PROXY" | "Proxy" | "GLOBAL" | "节点选择" | "手动切换"
+    ) {
+        return 1;
+    }
+    if group.kind == "Selector" {
+        return 2;
+    }
+    if matches!(group.kind.as_str(), "URLTest" | "Fallback" | "LoadBalance") {
+        return 3;
+    }
+    4
+}
+
+fn pick_primary_proxy_group(yaml: &str) -> Option<String> {
+    let doc: Value = serde_yaml::from_str(yaml).ok()?;
+    let groups = doc
+        .as_mapping()?
+        .get(Value::String("proxy-groups".into()))?
+        .as_sequence()?;
+
+    if let Some(name) = first_group_of_type(groups, "select") {
+        return Some(name);
+    }
+    for ty in ["url-test", "fallback", "load-balance"] {
+        if let Some(name) = first_group_of_type(groups, ty) {
+            return Some(name);
+        }
+    }
+    groups.iter().find_map(group_name)
+}
+
+fn first_group_of_type(groups: &[Value], wanted: &str) -> Option<String> {
+    groups.iter().find_map(|g| {
+        let map = g.as_mapping()?;
+        let ty = yaml_get_str(map, "type").unwrap_or("");
+        if ty.eq_ignore_ascii_case(wanted) {
+            group_name(g)
+        } else {
+            None
+        }
+    })
+}
+
+fn group_name(group: &Value) -> Option<String> {
+    yaml_get_str(group.as_mapping()?, "name").map(str::to_string)
+}
+
+fn yaml_get_str<'a>(map: &'a Mapping, key: &str) -> Option<&'a str> {
+    map.get(Value::String(key.into()))?.as_str()
 }
 
 fn default_bypass() -> Vec<String> {

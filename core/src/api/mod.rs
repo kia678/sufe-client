@@ -55,9 +55,19 @@ struct Inner {
 impl HttpClient {
     pub fn new(base: &str, locale: &str) -> Result<Self> {
         let base = url::Url::parse(base)?;
+        // UA must contain a clash.meta-family keyword (`meta`, `verge`,
+        // `flclash`, `nekobox`, `clashmetaforandroid`) so Xboard panels'
+        // protocol dispatcher routes our subscribe fetches to the ClashMeta
+        // handler (mihomo-native YAML w/ full Hysteria2/VLESS/TUIC coverage)
+        // rather than falling through to General (plain v2ray base64 links,
+        // which mihomo can't fully consume). `clash.meta/<mihomo-version>`
+        // is the cleanest match and aligns with the bundled mihomo binary.
         let http = reqwest::Client::builder()
             .timeout(Duration::from_secs(20))
-            .user_agent(concat!("xboard-client/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!(
+                "clash.meta/v1.18.7 xboard-client/",
+                env!("CARGO_PKG_VERSION")
+            ))
             .build()?;
         Ok(Self {
             inner: Arc::new(Inner {

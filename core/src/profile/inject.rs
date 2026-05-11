@@ -85,7 +85,11 @@ pub fn patch_mihomo(
     // IPv6 must be on, otherwise v6 traffic bypasses TUN and goes direct.
     doc.insert(Value::String("ipv6".into()), Value::Bool(true));
 
-    let mut tun = Mapping::new();
+    let mut tun = doc
+        .get(Value::String("tun".into()))
+        .and_then(Value::as_mapping)
+        .cloned()
+        .unwrap_or_else(Mapping::new);
     match mode {
         TunnelMode::Tun => {
             tun.insert(Value::String("enable".into()), Value::Bool(true));
@@ -150,35 +154,7 @@ pub fn patch_mihomo(
     }
     doc.insert(Value::String("tun".into()), Value::Mapping(tun));
 
-    // mihomo's built-in DNS must take over once we hijack 53. `listen: 1053`
-    // sidesteps the systemd-resolved 53-port conflict on Linux; the hijack is
-    // packet-level so the listen port can be anything mihomo can bind.
-    let mut dns = Mapping::new();
-    dns.insert(Value::String("enable".into()), Value::Bool(true));
-    dns.insert(
-        Value::String("listen".into()),
-        Value::String("0.0.0.0:1053".into()),
-    );
-    dns.insert(
-        Value::String("enhanced-mode".into()),
-        Value::String("fake-ip".into()),
-    );
-    dns.insert(
-        Value::String("fake-ip-range".into()),
-        Value::String("198.18.0.1/16".into()),
-    );
-    dns.insert(
-        Value::String("nameserver".into()),
-        Value::Sequence(vec![
-            Value::String("https://1.1.1.1/dns-query".into()),
-            Value::String("https://dns.google/dns-query".into()),
-        ]),
-    );
-    dns.insert(
-        Value::String("fallback".into()),
-        Value::Sequence(vec![Value::String("https://1.0.0.1/dns-query".into())]),
-    );
-    doc.insert(Value::String("dns".into()), Value::Mapping(dns));
+    patch_dns(&mut doc);
 
     // Auto-shunt: if the subscription didn't ship its own routing rules, inject
     // a sensible default — block ads, send CN traffic direct, foreign through
@@ -216,6 +192,111 @@ pub fn patch_mihomo(
 
     let out = serde_yaml::to_string(&Value::Mapping(doc))?;
     Ok(out)
+}
+
+/// Keep the subscription's DNS policy intact and only fill in the runtime
+/// fields the app needs. This mirrors Clash Verge Rev's DNS model: do not
+/// replace a working provider config, but make sure proxy server hostnames can
+/// be resolved through direct, China-reachable resolvers.
+fn patch_dns(doc: &mut Mapping) {
+    let mut dns = doc
+        .get(Value::String("dns".into()))
+        .and_then(Value::as_mapping)
+        .cloned()
+        .unwrap_or_else(Mapping::new);
+
+    insert_if_missing(&mut dns, "enable", Value::Bool(true));
+    insert_if_missing(&mut dns, "listen", Value::String("0.0.0.0:1053".into()));
+    insert_if_missing(&mut dns, "enhanced-mode", Value::String("fake-ip".into()));
+    insert_if_missing(
+        &mut dns,
+        "fake-ip-range",
+        Value::String("198.18.0.1/16".into()),
+    );
+    insert_if_missing(
+        &mut dns,
+        "fake-ip-filter-mode",
+        Value::String("blacklist".into()),
+    );
+    insert_if_missing(&mut dns, "prefer-h3", Value::Bool(false));
+    insert_if_missing(&mut dns, "respect-rules", Value::Bool(false));
+
+    insert_sequence_if_missing(
+        &mut dns,
+        "fake-ip-filter",
+        &[
+            "*.lan",
+            "*.local",
+            "*.arpa",
+            "time.*.com",
+            "ntp.*.com",
+            "+.market.xiaomi.com",
+            "localhost.ptlogin2.qq.com",
+            "*.msftncsi.com",
+            "www.msftconnecttest.com",
+        ],
+    );
+    insert_sequence_if_missing(
+        &mut dns,
+        "default-nameserver",
+        &["system", "223.5.5.5", "119.29.29.29", "114.114.114.114"],
+    );
+    insert_sequence_if_missing(
+        &mut dns,
+        "nameserver",
+        &[
+            "https://doh.pub/dns-query",
+            "https://dns.alidns.com/dns-query",
+            "system://",
+        ],
+    );
+    insert_sequence_if_missing(
+        &mut dns,
+        "proxy-server-nameserver",
+        &[
+            "https://doh.pub/dns-query",
+            "https://dns.alidns.com/dns-query",
+            "tls://223.5.5.5",
+            "119.29.29.29",
+        ],
+    );
+    insert_if_missing(&mut dns, "fallback", Value::Sequence(vec![]));
+    insert_if_missing(
+        &mut dns,
+        "nameserver-policy",
+        Value::Mapping(Mapping::new()),
+    );
+    insert_if_missing(&mut dns, "direct-nameserver", Value::Sequence(vec![]));
+    insert_if_missing(
+        &mut dns,
+        "direct-nameserver-follow-policy",
+        Value::Bool(false),
+    );
+
+    if !dns.contains_key(Value::String("ipv6".into())) {
+        let ipv6 = doc
+            .get(Value::String("ipv6".into()))
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        dns.insert(Value::String("ipv6".into()), Value::Bool(ipv6));
+    }
+
+    doc.insert(Value::String("dns".into()), Value::Mapping(dns));
+}
+
+fn insert_if_missing(map: &mut Mapping, key: &str, value: Value) {
+    let key = Value::String(key.into());
+    if !map.contains_key(&key) {
+        map.insert(key, value);
+    }
+}
+
+fn insert_sequence_if_missing(map: &mut Mapping, key: &str, values: &[&str]) {
+    insert_if_missing(
+        map,
+        key,
+        Value::Sequence(values.iter().map(|v| Value::String((*v).into())).collect()),
+    );
 }
 
 /// Returns true when the YAML has no usable `rules` array. We treat an empty
@@ -388,6 +469,17 @@ mod tests {
                 .unwrap(),
             "0.0.0.0:1053"
         );
+        let proxy_ns = dns
+            .get(Value::String("proxy-server-nameserver".into()))
+            .unwrap()
+            .as_sequence()
+            .unwrap();
+        assert!(
+            proxy_ns
+                .iter()
+                .any(|v| v.as_str() == Some("https://doh.pub/dns-query")),
+            "proxy server hostnames need a direct resolver"
+        );
     }
 
     #[cfg(target_os = "macos")]
@@ -453,7 +545,7 @@ mod tests {
     }
 
     #[test]
-    fn existing_tun_block_is_disabled_when_system_proxy_mode() {
+    fn existing_tun_block_is_only_disabled_when_system_proxy_mode() {
         let yaml = "tun:\n  enable: true\n  stack: system\n";
         let out = patch_mihomo(yaml, "127.0.0.1:9090", "x", 7890, TunnelMode::SystemProxy).unwrap();
         let m = parse(&out);
@@ -465,8 +557,48 @@ mod tests {
             tun.get(Value::String("enable".into())).unwrap(),
             &Value::Bool(false)
         );
-        // Whole sub-block was rewritten — old "stack: system" must be gone.
-        assert!(tun.get(Value::String("stack".into())).is_none());
+        // Keep provider/user details while toggling only the runtime switch,
+        // matching Clash Verge Rev's conservative TUN patching.
+        assert_eq!(
+            tun.get(Value::String("stack".into()))
+                .and_then(Value::as_str),
+            Some("system")
+        );
+    }
+
+    #[test]
+    fn upstream_dns_nameservers_are_preserved() {
+        let yaml = r#"
+dns:
+  enable: true
+  nameserver:
+    - https://example.test/dns-query
+  enhanced-mode: redir-host
+"#;
+        let out = patch_mihomo(yaml, "127.0.0.1:9090", "x", 7890, TunnelMode::Tun).unwrap();
+        let m = parse(&out);
+        let dns = match m.get(Value::String("dns".into())).unwrap() {
+            Value::Mapping(d) => d,
+            _ => panic!("dns must be mapping"),
+        };
+        let nameserver = dns
+            .get(Value::String("nameserver".into()))
+            .unwrap()
+            .as_sequence()
+            .unwrap();
+        assert_eq!(nameserver.len(), 1);
+        assert_eq!(
+            nameserver[0].as_str().unwrap(),
+            "https://example.test/dns-query"
+        );
+        assert_eq!(
+            dns.get(Value::String("enhanced-mode".into()))
+                .and_then(Value::as_str),
+            Some("redir-host")
+        );
+        assert!(dns
+            .get(Value::String("proxy-server-nameserver".into()))
+            .is_some());
     }
 
     #[test]
