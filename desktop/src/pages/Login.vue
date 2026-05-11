@@ -86,6 +86,7 @@ async function onSubmit() {
           : undefined,
     });
     message.success(t("login.success", { email: summary.email }));
+    sessionStorage.setItem("xboard.autoConnectAfterLogin", "1");
     const redirect = (route.query.redirect as string) || "/";
     router.push(redirect);
   } catch (e) {

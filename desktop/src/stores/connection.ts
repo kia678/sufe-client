@@ -48,14 +48,14 @@ export const useConnectionStore = defineStore("connection", () => {
     if (s.kind !== "connected") return false;
     return s.mode !== requestedMode.value;
   });
-  const currentProxy = computed<string | null>(() => {
-    // Best-effort: pick the first selector group's `now`. Refine once UI
-    // distinguishes "primary" group (Xboard subs almost always use PROXY).
-    const primary =
-      proxies.value.find((g) => g.name === "PROXY") ??
-      proxies.value.find((g) => g.type === "Selector") ??
-      proxies.value[0];
-    return primary?.now ?? null;
+  const primaryGroup = computed<ProxyGroup | null>(() => {
+    const switchable = proxies.value.filter((g) => g.all.length > 0);
+    return switchable[0] ?? proxies.value[0] ?? null;
+  });
+  const currentProxy = computed<string | null>(() => primaryGroup.value?.now ?? null);
+  const effectiveProxy = computed<string | null>(() => {
+    if (!currentProxy.value) return null;
+    return resolveProxyLeaf(currentProxy.value, proxies.value);
   });
 
   /// Read the current state once + start listening. Idempotent — repeated
@@ -95,6 +95,9 @@ export const useConnectionStore = defineStore("connection", () => {
     // to detect that.
     requestedMode.value = mode.value;
     state.value = await api.connect();
+    if (state.value.kind === "connected") {
+      await refreshProxies();
+    }
   }
 
   async function disconnect() {
@@ -166,11 +169,13 @@ export const useConnectionStore = defineStore("connection", () => {
     proxies,
     mode,
     requestedMode,
+    primaryGroup,
     isConnected,
     isBusy,
     currentMode,
     wasDowngraded,
     currentProxy,
+    effectiveProxy,
     hydrate,
     connect,
     disconnect,
@@ -180,3 +185,15 @@ export const useConnectionStore = defineStore("connection", () => {
     dispose,
   };
 });
+
+function resolveProxyLeaf(name: string, groups: ProxyGroup[]): string {
+  const seen = new Set<string>();
+  let current = name;
+  while (!seen.has(current)) {
+    seen.add(current);
+    const group = groups.find((g) => g.name === current);
+    if (!group?.now) return current;
+    current = group.now;
+  }
+  return current;
+}

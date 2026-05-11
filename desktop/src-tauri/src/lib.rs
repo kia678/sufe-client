@@ -192,6 +192,8 @@ pub fn run() {
             commands::connection::proxies,
             commands::connection::select_proxy,
             commands::connection::latency_test,
+            commands::connection::node_geo_test,
+            commands::connection::resolve_node_geo_batch,
             commands::connection::current_traffic,
             commands::kernel::kernel_health,
             commands::kernel::kernel_version,

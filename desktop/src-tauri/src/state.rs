@@ -7,6 +7,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::ShellExt;
 use xboard_core::api::HttpClient;
+use xboard_core::kernel::TunnelMode;
 use xboard_core::profile::ProfileFetcher;
 use xboard_core::storage::SecureStore;
 use xboard_core::tunnel::DefaultSystemProxy;
@@ -22,6 +23,9 @@ use crate::persistence::Persistence;
 pub struct AppState {
     pub client: RwLock<Option<HttpClient>>,
     pub auth: RwLock<Option<AuthSession>>,
+    /// User-requested tunnel mode. This is stored before the lazy
+    /// `KernelManager` exists so the first connect honors the UI selection.
+    pub requested_mode: RwLock<TunnelMode>,
     /// Lazily initialized on the first `connect` call so we don't spin up
     /// the kernel manager (which spawns a broadcast channel) for users who
     /// never get past the login screen.
@@ -98,6 +102,7 @@ impl AppState {
             binary_path,
             work_dir,
         ));
+        manager.set_requested_mode(*self.requested_mode.read());
         let _ = self.kernel.set(manager.clone());
         Ok(manager)
     }

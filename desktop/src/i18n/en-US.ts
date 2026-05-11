@@ -261,6 +261,8 @@ export default {
     currentNode: "Current node",
     liveTraffic: "Live traffic",
     modeReconnect: "Mode switched — reconnecting…",
+    autoConnecting: "Signed in — syncing subscription and connecting…",
+    autoConnected: "Connected and node list synced",
     downgraded: "TUN unavailable — fell back to system proxy. Check privileges or the helper service to use TUN routing.",
     retry: "Retry",
     viewLogs: "View logs",

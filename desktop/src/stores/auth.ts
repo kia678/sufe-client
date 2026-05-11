@@ -60,6 +60,7 @@ export const useAuthStore = defineStore("auth", () => {
   }) {
     const summary = await api.login(args);
     session.value = summary;
+    await Promise.allSettled([refreshUser(), refreshSubscribe()]);
     return summary;
   }
 
@@ -73,6 +74,7 @@ export const useAuthStore = defineStore("auth", () => {
   }) {
     const summary = await api.register(args);
     session.value = summary;
+    await Promise.allSettled([refreshUser(), refreshSubscribe()]);
     return summary;
   }
 

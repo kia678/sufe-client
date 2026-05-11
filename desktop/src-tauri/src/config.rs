@@ -6,7 +6,7 @@
 /// Xboard backend API root. Must be the bare host (no path, no fragment) —
 /// `HttpClient::endpoint()` joins absolute paths like `/api/v1/...` and the
 /// resulting URL takes only this host's scheme + authority.
-pub const BACKEND_URL: &str = "https://www.isufe.me";
+pub const BACKEND_URL: &str = "https://imitate.cnqq.de";
 
 /// Default UI locale on cold start. Matches the V1 `Accept-Language` header
 /// the backend uses to pick error message translations.

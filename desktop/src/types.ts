@@ -113,6 +113,17 @@ export interface ProxyGroup {
   all: string[];
 }
 
+export interface NodeGeo {
+  node: string;
+  ip: string;
+  country: string;
+  city: string;
+  lat: number;
+  lon: number;
+  isp?: string | null;
+  source: string;
+}
+
 // --- Kernel diagnostics ---
 
 // Pre-flight check returned by `kernel_health`. `helper_*` semantics depend

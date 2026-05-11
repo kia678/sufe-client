@@ -261,6 +261,8 @@ export default {
     currentNode: "当前节点",
     liveTraffic: "实时流量",
     modeReconnect: "模式已切换，正在重新建立连接…",
+    autoConnecting: "登录成功，正在自动同步订阅并连接节点…",
+    autoConnected: "已连接并同步节点列表",
     downgraded: "TUN 模式不可用，已自动切换到系统代理。如需 TUN 路由请检查权限或后台服务。",
     retry: "重试",
     viewLogs: "查看日志",

@@ -6,6 +6,7 @@ import type {
   KernelHealth,
   KernelVersion,
   LoginSummary,
+  NodeGeo,
   Notice,
   Order,
   PaymentMethod,
@@ -76,6 +77,10 @@ export const api = {
   selectProxy: (group: string, name: string) =>
     invoke<void>("select_proxy", { group, name }),
   latencyTest: (name: string) => invoke<number>("latency_test", { name }),
+  nodeGeoTest: (group: string, name: string) =>
+    invoke<NodeGeo>("node_geo_test", { group, name }),
+  resolveNodeGeoBatch: () =>
+    invoke<Record<string, NodeGeo>>("resolve_node_geo_batch"),
   currentTraffic: () => invoke<TrafficStats>("current_traffic"),
 
   // Read-only diagnostics — neither call spawns mihomo.
