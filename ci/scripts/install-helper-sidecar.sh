@@ -31,6 +31,12 @@ DEST="${REPO_ROOT}/desktop/src-tauri/binaries"
 mkdir -p "${DEST}"
 
 host_triple() {
+    # CI may cross-compile (arm64 runner producing x86_64 helper). Honor an
+    # explicit override so the bundled sidecar matches the Tauri target.
+    if [[ -n "${TARGET_TRIPLE:-}" ]]; then
+        echo "${TARGET_TRIPLE}"
+        return
+    fi
     local arch os
     arch="$(uname -m)"
     os="$(uname -s)"
@@ -46,12 +52,20 @@ host_triple() {
 TRIPLE="$(host_triple)"
 echo "→ build xboard-helper (${PROFILE}) for ${TRIPLE}"
 cd "${REPO_ROOT}"
+# When TARGET_TRIPLE differs from the actual host, pass it to cargo so the
+# binary lands in target/${TRIPLE}/${PROFILE}/ and not target/${PROFILE}/.
+CARGO_TARGET_FLAG=()
+TARGET_SUBDIR=""
+if [[ -n "${TARGET_TRIPLE:-}" ]]; then
+    CARGO_TARGET_FLAG=(--target "${TARGET_TRIPLE}")
+    TARGET_SUBDIR="${TARGET_TRIPLE}/"
+fi
 if [[ "${PROFILE}" == "release" ]]; then
-    cargo build -p xboard-helper --release
-    SRC="${REPO_ROOT}/target/release/xboard-helper"
+    cargo build -p xboard-helper --release "${CARGO_TARGET_FLAG[@]}"
+    SRC="${REPO_ROOT}/target/${TARGET_SUBDIR}release/xboard-helper"
 else
-    cargo build -p xboard-helper
-    SRC="${REPO_ROOT}/target/debug/xboard-helper"
+    cargo build -p xboard-helper "${CARGO_TARGET_FLAG[@]}"
+    SRC="${REPO_ROOT}/target/${TARGET_SUBDIR}debug/xboard-helper"
 fi
 
 OUT="${DEST}/xboard-helper-${TRIPLE}"

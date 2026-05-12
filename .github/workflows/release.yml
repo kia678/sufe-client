@@ -44,8 +44,12 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             os: macos-latest
+          # Cross-compile Intel from the same Apple Silicon runner — macos-13
+          # x86_64 runners have a persistent multi-hour queue, and cross-build
+          # via `rustup target add x86_64-apple-darwin` is supported out of
+          # the box on macOS arm64 hosts.
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
           - target: x86_64-unknown-linux-gnu
@@ -93,11 +97,15 @@ jobs:
 
       - name: Fetch mihomo sidecar
         shell: bash
+        env:
+          TARGET_TRIPLE: ${{ matrix.target }}
         run: bash ci/scripts/install-mihomo-sidecar.sh "${MIHOMO_VERSION}"
 
       - name: Build helper sidecar (release)
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          TARGET_TRIPLE: ${{ matrix.target }}
         run: bash ci/scripts/install-helper-sidecar.sh release
 
       - name: Build xboard-svc + fetch wintun.dll

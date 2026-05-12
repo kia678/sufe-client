@@ -43,6 +43,12 @@ mihomo_artifact() {
 }
 
 host_triple() {
+    # Honor an explicit override so CI can cross-compile to a target that
+    # doesn't match the host (e.g. arm64 runner producing x86_64 build).
+    if [[ -n "${TARGET_TRIPLE:-}" ]]; then
+        echo "${TARGET_TRIPLE}"
+        return
+    fi
     local arch os
     arch="$(uname -m)"
     os="$(uname -s)"
