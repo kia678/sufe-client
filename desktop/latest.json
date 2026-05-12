@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "notes": "Tag v0.1.0",
+  "pub_date": "2026-05-12T01:15:52Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "url": "https://github.com/Shannon-x/sufe-client/releases/download/v0.1.0/Xboard_aarch64.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUUVYrZWQzeC9reGFGZm5uWHBWKzZIemR5b3d4OTMvVnc0djlHQW9jUUx6dXRTUUlYN3c4T3ZJR00rNDk1bloyY01iaTFKZ0VyQ1NUbG1UOEIxS0FxVVhvRGhCbWRjNVFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NTQ4MzU1CWZpbGU6WGJvYXJkLmFwcC50YXIuZ3oKL2pHRFFHTEwwZEtnL1dxMFRuRTRKR0J1eC91bENlZ0hIM3pIK2FDTVl1cCtLU24wai9mVEdmNEg1aEtMTDQxM0N5dmJ5dFBjK2pLSnV4ZFpHY2cvQ3c9PQo="
+    },
+    "darwin-x86_64": {
+      "url": "https://github.com/Shannon-x/sufe-client/releases/download/v0.1.0/Xboard_x64.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUUVYrZWQzeC9reGRhYmJUVnZBQlZnOG4vUTBneGliY1dXRUZlSFIzMS9waDBDWEdsdC9Nc3cvZDlxVHBReUcyNkhjMkJTR2l5YnNKNUdRVmZwYmY1ZkliYkwvam9qamd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NTQ4NDg2CWZpbGU6WGJvYXJkLmFwcC50YXIuZ3oKV0hOaWZpK0prazZsYXJRcnY5bkpSbTJTakhBcGh5bFoxYWhJVXZITkE0SGxJUFBQYnpDdEptY3VBaGlHSVpHSnpNSHlUSkFQUlgvbGJyZVhEdnpYQVE9PQo="
+    },
+    "windows-x86_64": {
+      "url": "https://github.com/Shannon-x/sufe-client/releases/download/v0.1.0/Xboard_0.1.0_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUUVYrZWQzeC9reGRFMlV0ZXV1bzRTZmk3MXRmMitjeUJXcnFxUEtiQUFFa0o1dStHOFRJWW5SRTRKODkyUHpuWlpkSmlpNDBmZGJWenpiR2J4dWliS0tvemNJV1BhK2dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NTQ4NDQyCWZpbGU6WGJvYXJkXzAuMS4wX3g2NC1zZXR1cC5leGUKWTdDTk1IRFNTRk9JUmJCdHlDV0FydUp0anRaSk9WRWIrcmI5WE50cmNkTHQvdjVRbmlyRERoYVcxTVd0RVVUa0pTek9lbnJCdGJ0R2lDUkYwUVpBQ2c9PQo="
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/Shannon-x/sufe-client/releases/download/v0.1.0/Xboard_0.1.0_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUUVYrZWQzeC9reFFBeVN6UmdPYXFubzNuazdQMzMxYitvaFZEZkF2WURVUzdTUU5FSjdTSFMwVXlxWUxyV01XVC94NDlQYzNCV3Z4M1VUNURLd1B4SktjcHFUeE90TlFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NTQ4MzIwCWZpbGU6WGJvYXJkXzAuMS4wX2FtZDY0LkFwcEltYWdlCjNzN2JwTmRLL1l3dTVUTGZhQmpyTFdSOHpWWlBGNFF3OVpRT3oyQmVZVnZWSXhpL3EzWTloQjNsUE0zM2pWZGRVNVBhbmVrQ1ByNTRodHhVZjhzUUJRPT0K"
+    }
+  }
+}
